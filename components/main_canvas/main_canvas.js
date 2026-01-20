@@ -130,6 +130,7 @@ class MainCanvas extends HTMLElement {
                 }
             } else if(e.button === 1) {
                 if(this.is_mouse_in_element(e, this.main_canvas_large)) {
+                    e.preventDefault();
                     document.body.style.cursor = "grab";
                     this.dragging = true;
                     this.drag_start = { x: e.clientX, y: e.clientY };
