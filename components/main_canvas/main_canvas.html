@@ -5,6 +5,17 @@
             <img src="../../assets/Bootstrap_Icons/unlock.svg" alt="Guideline Unlocked" style="width: 14px; height: 14px; display: inline;">
         </button>
 
+        <script>
+            const base = window.location.href;
+
+            const btn = document.getElementById("lock_guideline_button");
+            const imgs = btn.querySelectorAll("img");
+
+            imgs.forEach(img => {
+                img.src = new URL(img.dataset.src, base).href;
+            });
+        </script>
+
         <div id="ruler_horizontal" class="ruler_horizontal"></div>
         <div id="ruler_vertical" class="ruler_vertical"></div>
         <div id="main_canvas_large" class="main_canvas_large" style="position: absolute; top: 0; right: 0; width: 100%; height: 100%; background-color: white;">
