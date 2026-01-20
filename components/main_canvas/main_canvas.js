@@ -67,7 +67,7 @@ class MainCanvas extends HTMLElement {
     }
 
     async connectedCallback() {
-        const response = await fetch("/components/main_canvas/main_canvas.html");
+        const response = await fetch(new URL("components/main_canvas/main_canvas.html", window.location.href));
         const html = await response.text();
 
         const temp = document.createElement("div");

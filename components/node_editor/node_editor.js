@@ -5,7 +5,7 @@ class NodeEditor extends HTMLElement {
     }
 
     async connectedCallback() {
-        const response = await fetch("/components/node_editor/node_editor.html");
+        const response = await fetch(new URL("components/node_editor/node_editor.html", window.location.href));
         const html = await response.text();
 
         const temp = document.createElement("div");
