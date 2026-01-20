@@ -1,0 +1,53 @@
+.middle {
+    flex: 1;
+    display: flex;
+    padding: 8px;
+    gap: 8px;
+}
+
+.placeholder {
+    border: 1px dashed #ddd;
+    border-radius: 8px;
+    display: flex;
+    overflow: hidden;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.placeholder span {
+    display: block;
+    font-size: 12px;
+    margin: 4px 8px;
+    width: 100%;
+}
+
+.left {
+    flex: auto;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.right {
+    width: 20%;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 8px 8px;
+}
+
+.tool_button {
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: default;
+}
+
+.tool_button:hover {
+    background-color: #eee;
+}
+
+.tool_button:active {
+    border: 1px solid #888;
+}

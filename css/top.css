@@ -1,0 +1,23 @@
+.top {
+    height: 27px;
+    display: flex;
+    font-size: 13px;
+    user-select: none;
+    background-color: #ffffff;
+    border-bottom: 1px solid #ddd;
+}
+
+.item {
+    padding: 2px 12px;
+    border-radius: 8px;
+    cursor: default;
+    border: 1px solid transparent;
+}
+
+.item:hover {
+    background-color: #eee;
+}
+
+.item:active {
+    border: 1px solid #888;
+}
