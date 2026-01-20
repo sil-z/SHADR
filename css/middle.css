@@ -1,8 +1,8 @@
 .middle {
     flex: 1;
     display: flex;
-    padding: 8px;
-    gap: 8px;
+    padding: 4px;
+    gap: 4px;
 }
 
 .placeholder {
