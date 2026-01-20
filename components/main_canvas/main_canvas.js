@@ -1,4 +1,4 @@
-import * as Bezier from "/js/bezier_curve.js";
+import * as Bezier from "../../js/bezier_curve.js";
 
 class MainCanvas extends HTMLElement {
     constructor() {
