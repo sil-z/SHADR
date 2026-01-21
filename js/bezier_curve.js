@@ -2,8 +2,8 @@ export let param_set = {
     "1": {
         "path_stroke_color": "rgba(127, 127, 127, 1)",
         "path_fill_color": "rgba(0,0,0,1)",
-        "control_ahead_color": "rgba(255, 0, 0, 0.6)",
-        "control_back_color": "rgba(0, 0, 255, 0.6)",
+        "control_ahead_color": "rgba(0, 0, 255, 0.6)",
+        "control_back_color": "rgba(255, 0, 0, 0.6)",
         "preview_color": "rgba(0, 255, 0, 0.6)",
         "oncurve_stroke_color": "rgba(113, 201, 206, 1)",
         "oncurve_fill_color": "rgba(113, 201, 206, 0.6)",
@@ -98,14 +98,16 @@ export class CurveNode {
         if(other_control === null || one_control_n === null)
             return;
 
-        const t_match_1 = get_transform_xy(one_control_n.main_node.style.transform);
-        const t_match_2 = get_transform_xy(this.main_node.style.transform);
+        const transform_1_x = one_control_n.main_node.dataset.transformx;
+        const transform_1_y = one_control_n.main_node.dataset.transformy;
+        const transform_2_x = this.main_node.dataset.transformx;
+        const transform_2_y = this.main_node.dataset.transformy;
 
         if(control_mode === 2 || this.control_mode === 2) {
             other_control.x = 2 * this.x - one_control_n.x;
             other_control.y = 2 * this.y - one_control_n.y;
             other_control.main_node.style.transform =
-                `translate(${(2 * t_match_2.x - t_match_1.x)}px, ${(2 * t_match_2.y - t_match_1.y)}px)`;
+                `translate(${(2 * transform_2_x - transform_1_x)}px, ${(2 * transform_2_y - transform_1_y)}px)`;
         } else if(this.control_mode === 1) {
 
         }
@@ -122,17 +124,16 @@ export class CurveNode {
         if(this.synmove_mode === 0 && synmove_mode === 0)
             return;
         if(this.control1 !== null) {
-            const t_match = get_transform_xy(this.control1.main_node.style.transform);
             this.control1.main_node.style.transform =
-                `translate(${(t_match.x + dx)}px, ${(t_match.y + dy)}px)`;
+                `translate(${(this.control1.main_node.dataset.transformx + dx)}px, ${(this.control1.main_node.dataset.transformy + dy)}px)`;
             this.control1.x += logic_dx;
             this.control1.y += logic_dy;
         }
 
         if(this.control2 !== null) {
-            const t_match = get_transform_xy(this.control2.main_node.style.transform);
             this.control2.main_node.style.transform =
-                `translate(${(t_match.x + dx)}px, ${(t_match.y + dy)}px)`;
+                `translate(${(this.control2.main_node.dataset.transformx + dx)}px, ${(this.control2.main_node.dataset.transformy + dy)}px)`;
+
             this.control2.x += logic_dx;
             this.control2.y += logic_dy;
         }
@@ -151,9 +152,8 @@ export class CurveNode {
             node_n.sync_control_with_main(dx, dy, logic_dx, logic_dy, 0);
             node_n.x += logic_dx;
             node_n.y += logic_dy;
-            const t_match = get_transform_xy(node.style.transform);
             node.style.transform =
-                `translate(${(t_match.x + dx)}px, ${(t_match.y + dy)}px)`;
+                `translate(${(node.dataset.transformx + dx)}px, ${(node.dataset.transformy + dy)}px)`;
         }
     }
 
@@ -570,23 +570,6 @@ export class CurveManager {
     // 根据页面元素在所有节点对象中找到对应的对象，这需要先找到对应包含的曲线
     find_node_by_curve(main_node) {
         return this.find_curve_by_dom(main_node)?.find_node_by_dom(main_node) ?? null;
-    }
-}
-
-
-// 提取 transform 字符串中的 xy 参数
-export function get_transform_xy(transform) {
-    if (transform === undefined)
-        return undefined;
-    const regex = /translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/;
-    const match = transform.match(regex);
-
-    if (match) {
-        const x = parseFloat(match[1]);
-        const y = parseFloat(match[2]);
-        return { x, y };
-    } else {
-        return undefined;
     }
 }
 

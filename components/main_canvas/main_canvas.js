@@ -43,7 +43,7 @@ class MainCanvas extends HTMLElement {
         // 存储当前路径的上一个主要节点，作为加入新节点的索引之一
         this.last_on_curve_node = null;
 
-        this.scale_min = 0.02;
+        this.scale_min = 0.01;
         this.scale_max = 100;
         this.scale = 0.4;
 
@@ -64,6 +64,8 @@ class MainCanvas extends HTMLElement {
 
         this.node_id_i = 0;
         this.path_id_i = 0;
+
+        this.mouse_pos_output = null;
     }
 
     async connectedCallback() {
@@ -86,22 +88,49 @@ class MainCanvas extends HTMLElement {
         this.main_canvas = this.shadowRoot.getElementById("main_canvas");
         this.main_canvas_large = this.shadowRoot.getElementById("main_canvas_large");
 
+        const base = window.location.href;
+        this.lock_guideline_icon.src = new URL(this.lock_guideline_icon.dataset.src, base).href;
+        this.lock_guideline_icon_unlocked.src = new URL(this.lock_guideline_icon_unlocked.dataset.src, base).href;
+        
+        this.lock_guideline_button.addEventListener("mousedown", (e) => {
+            this.guideline_lock = !this.guideline_lock;
+            if(this.guideline_lock) {
+                this.lock_guideline_icon.style.display = "inline";
+                this.lock_guideline_icon_unlocked.style.display = "none";
+            } else {
+                this.lock_guideline_icon.style.display = "none";
+                this.lock_guideline_icon_unlocked.style.display = "inline";
+            }
+        });
+
         this.update_ruler_loop();
 
+        let wheel_pending = false;
+        let last_event = null;
+
         window.addEventListener("wheel", (e) => {
+
+            e.preventDefault();
+
+            if(wheel_pending)
+                return;
+            wheel_pending = true;
+
             const rect = this.main_canvas.getBoundingClientRect();
+
             let x = e.clientX - rect.left;
             let y = e.clientY - rect.top;
 
             if (e.ctrlKey && this.is_mouse_in_element(e, this.main_canvas_large)) {
-                e.preventDefault();
                 this.change_canvas_size(e.deltaY, x, y, false);
             } else if (e.altKey && this.is_mouse_in_element(e, this.main_canvas_large)) {
-                e.preventDefault();
                 this.change_canvas_size(e.deltaY, x, y, true);
             }
 
             this.update_preview(e);
+            requestAnimationFrame(() => {
+                wheel_pending = false;
+            });
         }, { passive: false });
 
         this.main_canvas_large.addEventListener("mousedown", (e) => {
@@ -114,8 +143,9 @@ class MainCanvas extends HTMLElement {
                     const rect = this.main_canvas.getBoundingClientRect();
                     const x = e.clientX - rect.left;
                     const y = e.clientY - rect.top;
-                    if(this.current_curve === null)
+                    if(this.current_curve === null) {
                         this.current_curve = this.curve_manager.add_curve("a");
+                    }
                     let new_curve_node = this.create_node(x, y, this.main_canvas, Bezier.param_set["1"]["oncurve_fill_color"], Bezier.param_set["1"]["oncurve_stroke_color"], "square", "test_id", "vertex", 4, 1, 0);
                     
                     this.curve_manager.add_node_by_curve(new_curve_node, "curve", x / this.scale, y / this.scale, null, this.last_on_curve_node, this.current_curve, String(this.node_id_i))?.update_svg_curve(this.main_canvas, this.scale);
@@ -146,13 +176,19 @@ class MainCanvas extends HTMLElement {
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
+            if(this.mouse_pos_output !== null && this.mouse_pos_output !== undefined) {
+                this.mouse_pos_output.textContent = "Mouse Pos " + String((x / this.scale).toFixed(2)) + " " + String((1000 - y / this.scale).toFixed(2));
+            } else {
+                this.mouse_pos_output = document.querySelector("#bottom")?.children[1].shadowRoot.getElementById("mouse_pos");
+            }
+
             if((e.buttons & 4) !== 0 && this.dragging === true && this.is_mouse_in_element(e, this.main_canvas_large)) {
 
                 // 按下中键时移动，更新画布拖动数据
                 const dx = e.clientX - this.drag_start.x;
                 const dy = e.clientY - this.drag_start.y;
 
-                this.offset = { x: this.offset_start.x + dx / this.scale, y: this.offset_start.y + dy / this.scale};
+                this.offset = { x: this.offset_start.x + dx, y: this.offset_start.y + dy };
             } else if((e.buttons & 1) !== 0 && this.painting_handle === true) {
                 // 按下左键时移动，正在拖动手柄
                 if(this.new_curve_handle === null && (Math.abs(x - this.painting_handle_start.x) > 1 || Math.abs(y - this.painting_handle_start.y) > 1)) {
@@ -174,6 +210,8 @@ class MainCanvas extends HTMLElement {
                 } else if(this.new_curve_handle !== null) {
                     // 已经创建了手柄点，更新其坐标
                     this.new_curve_handle.style.transform = `translate(${x - Number(this.new_curve_handle.dataset.size)}px, ${y - Number(this.new_curve_handle.dataset.size)}px)`;
+                    this.new_curve_handle.dataset.transformx = String(x - Number(this.new_curve_handle.dataset.size));
+                    this.new_curve_handle.dataset.transformy = String(y - Number(this.new_curve_handle.dataset.size));
 
                     this.curve_manager.find_node_by_curve(this.new_curve_handle).x = x / this.scale;
                     this.curve_manager.find_node_by_curve(this.new_curve_handle).y = y / this.scale;
@@ -186,14 +224,15 @@ class MainCanvas extends HTMLElement {
             } else if((e.buttons & 1) !== 0 && this.dragging_node_b_ready === true) {
                 // 按下左键时移动，正在拖动已创建的节点
                 // 包括主节点和控制手柄
-                if(Math.abs(x - this.dragging_node_start.x) > 1 || Math.abs(y - this.dragging_node_start.y) > 1)
+                if(Math.abs(x - this.dragging_node_start.x) > 1 || Math.abs(y - this.dragging_node_start.y) > 1) {
                     this.dragging_node_b = true;
+                }
                 const dragging_node_n = this.curve_manager.find_node_by_curve(this.dragging_node);
                 if(this.dragging_node_b) {
                     if(dragging_node_n.type !== null) {
                         // 是主节点
-                        const dx = x - Number(this.dragging_node.dataset.size) - parseFloat(this.dragging_node.style.transform.match(/translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/)[1]);
-                        const dy = y - Number(this.dragging_node.dataset.size) - parseFloat(this.dragging_node.style.transform.match(/translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/)[2]);
+                        const dx = x - Number(this.dragging_node.dataset.size) - parseFloat(this.dragging_node.dataset.transformx);
+                        const dy = y - Number(this.dragging_node.dataset.size) - parseFloat(this.dragging_node.dataset.transformy);
                         const new_x = x / this.scale, new_y = y / this.scale;
 
                         //移动场上所有选中的点
@@ -205,6 +244,9 @@ class MainCanvas extends HTMLElement {
                     } else {
                         // 是控制点
                         this.dragging_node.style.transform = `translate(${x - Number(this.dragging_node.dataset.size)}px, ${y - Number(this.dragging_node.dataset.size)}px)`;
+                        this.dragging_node.dataset.transformx = String(x - Number(this.dragging_node.dataset.size));
+                        this.dragging_node.dataset.transformy = String(y - Number(this.dragging_node.dataset.size));
+
                         this.dragging_node_start = { x, y };
 
                         dragging_node_n.x = x / this.scale;
@@ -296,7 +338,7 @@ class MainCanvas extends HTMLElement {
         svg.style.display = "block";
 
         const { step, precision } = this.getStepAndPrecision(this.scale);
-        const origin = this.offset.x * this.scale;
+        const origin = this.offset.x;
 
         for(let i = 0; ; i += 1) {
             let j = i / 10;
@@ -398,7 +440,7 @@ class MainCanvas extends HTMLElement {
         svg.style.display = "block";
 
         const { step, precision } = this.getStepAndPrecision(this.scale);
-        const origin = this.offset.y * this.scale;
+        const origin = this.offset.y;
 
 
         for(let i = 0; ; i += 1) {
@@ -493,8 +535,8 @@ class MainCanvas extends HTMLElement {
     }
 
     update_canvas() {
-        const left = this.ruler_vertical.getBoundingClientRect().width + this.offset.x * this.scale;
-        const top = this.ruler_horizontal.getBoundingClientRect().height + this.offset.y * this.scale;
+        const left = this.ruler_vertical.getBoundingClientRect().width + this.offset.x;
+        const top = this.ruler_horizontal.getBoundingClientRect().height + this.offset.y;
 
         this.main_canvas.style.transform = `translate(${left}px, ${top}px)`;
         this.main_canvas.style.width = `${this.canvas_size_width * this.scale}px`;
@@ -510,17 +552,23 @@ class MainCanvas extends HTMLElement {
                 start_node.main_node.style.transform =
                     `translate(${start_node.x * this.scale - Number(start_node.main_node.dataset.size)}px, 
                             ${start_node.y * this.scale - Number(start_node.main_node.dataset.size)}px)`;
+                start_node.main_node.dataset.transformx = String(start_node.x * this.scale - Number(start_node.main_node.dataset.size));
+                start_node.main_node.dataset.transformy = String(start_node.y * this.scale - Number(start_node.main_node.dataset.size));
 
                 if (start_node.control1 != null) {
                     start_node.control1.main_node.style.transform =
                         `translate(${start_node.control1.x * this.scale - Number(start_node.control1.main_node.dataset.size)}px, 
                                 ${start_node.control1.y * this.scale - Number(start_node.control1.main_node.dataset.size)}px)`;
+                    start_node.control1.main_node.dataset.transformx = String(start_node.control1.x * this.scale - Number(start_node.control1.main_node.dataset.size));
+                    start_node.control1.main_node.dataset.transformy = String(start_node.control1.y * this.scale - Number(start_node.control1.main_node.dataset.size));
                 }
 
                 if (start_node.control2 != null) {
                     start_node.control2.main_node.style.transform =
                         `translate(${start_node.control2.x * this.scale - Number(start_node.control2.main_node.dataset.size)}px, 
                                 ${start_node.control2.y * this.scale - Number(start_node.control2.main_node.dataset.size)}px)`;
+                    start_node.control2.main_node.dataset.transformx = String(start_node.control2.x * this.scale - Number(start_node.control2.main_node.dataset.size));
+                    start_node.control2.main_node.dataset.transformy = String(start_node.control2.y * this.scale - Number(start_node.control2.main_node.dataset.size));
                 }
 
                 start_node.update_svg_curve(this.main_canvas, this.scale);
@@ -552,23 +600,28 @@ class MainCanvas extends HTMLElement {
 
             if(this.preview_curve === null) {
                 this.preview_curve = Bezier.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [p2_x, p2_y], [p3_x, p3_y], 0.5, Bezier.param_set["1"]["preview_color"], false, "none", this.main_canvas);
-                if(this.curve_manager.find_curve_by_dom(this.last_on_curve_node).closed)
+                if(this.curve_manager.find_curve_by_dom(this.last_on_curve_node).closed) {
                     this.preview_curve_1 = Bezier.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [_p2_x, _p2_y], [_p3_x, _p3_y], 0.5, Bezier.param_set["1"]["preview_color"], false, "none", this.main_canvas);
+                }
             } else {
                 const d = `M ${p0_x},${p0_y} C ${p1_x},${p1_y} ${p2_x},${p2_y} ${p3_x},${p3_y}`;
                 const d1 = `M ${p0_x},${p0_y} C ${p1_x},${p1_y} ${_p2_x},${_p2_y} ${_p3_x},${_p3_y}`;
                 this.preview_curve.firstElementChild.setAttribute("d", d);
-                if(this.preview_curve_1 !== null)
+                if(this.preview_curve_1 !== null) {
                     this.preview_curve_1.firstElementChild.setAttribute("d", d1);
+                }
             }
         }
     }
 
     change_canvas_size(dy, x, y, fixed) {
-        if(fixed)
-            x = this.canvas_size_width / 2 * scale, y = this.canvas_size_height / 2 * scale;
+        if(fixed) {
+            // x = this.canvas_size_width / 2 * this.scale, y = this.canvas_size_height / 2 * this.scale;
+            x = 10000 * this.scale, y = 10000 * this.scale;
+        }
+
         let wheel_delta = dy < 0 ? 1.1 : 0.9;
-        const old_scale = this.scale;
+        
         let new_scale = Math.min(Math.max(this.scale * wheel_delta, this.scale_min), this.scale_max);
         if(new_scale == this.scale) {
             return;
@@ -576,11 +629,10 @@ class MainCanvas extends HTMLElement {
 
         const x_new = x / this.scale * new_scale;
         const y_new = y / this.scale * new_scale;
-        
-        this.offset = { x: this.offset.x * (old_scale / new_scale), y: this.offset.y * (old_scale / new_scale)};
+
         this.scale = new_scale;
 
-        this.offset = { x: this.offset.x + (x - x_new) / this.scale, y: this.offset.y + (y - y_new) / this.scale};
+        this.offset = { x: (this.offset.x + x - x_new), y: (this.offset.y + y - y_new)};
     }
 
     is_mouse_in_element(e, element) {
@@ -663,6 +715,8 @@ class MainCanvas extends HTMLElement {
         svg.style.left = "0px";
         svg.style.top = "0px";
         svg.style.transform = `translate(${x - size}px, ${y - size}px)`;
+        svg.dataset.transformx = String(x - size);
+        svg.dataset.transformy = String(y - size);
 
         svg.style.overflow = "visible";
         svg.style.zIndex = "100";
@@ -742,8 +796,10 @@ class MainCanvas extends HTMLElement {
                 this.dragging_node = svg;
 
                 if(!e.ctrlKey && svg.firstElementChild.tagName === "rect") {
-                    if(!this.node_selecting.has(svg))
+                    if(!this.node_selecting.has(svg)) {
                         this.clear_select();
+                    }
+
                     this.add_select(svg);
                     this.new_selected_temp = svg;
                 } else if(e.ctrlKey && svg.firstElementChild.tagName === "rect") {

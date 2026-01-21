@@ -1,20 +1,9 @@
 <template data-component="main_canvas">
     <div id="painting_area" class="painting_area">
         <button id="lock_guideline_button" class="lock_guideline_button">
-            <img src="assets/Bootstrap_Icons/lock.svg" alt="Guideline Locked" style="width: 14px; height: 14px; display: none;">
-            <img src="assets/Bootstrap_Icons/unlock.svg" alt="Guideline Unlocked" style="width: 14px; height: 14px; display: inline;">
+            <img id="lock_guideline_icon" data-src="assets/Bootstrap_Icons/lock.svg" alt="Guideline Locked" style="width: 14px; height: 14px; display: none;">
+            <img id="lock_guideline_icon_unlocked" data-src="assets/Bootstrap_Icons/unlock.svg" alt="Guideline Unlocked" style="width: 14px; height: 14px; display: inline;">
         </button>
-
-        <script>
-            const base = window.location.href;
-
-            const btn = document.getElementById("lock_guideline_button");
-            const imgs = btn.querySelectorAll("img");
-
-            imgs.forEach(img => {
-                img.src = new URL(img.dataset.src, base).href;
-            });
-        </script>
 
         <div id="ruler_horizontal" class="ruler_horizontal"></div>
         <div id="ruler_vertical" class="ruler_vertical"></div>
@@ -43,6 +32,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .lock_guideline_button:hover {
+            background-color: #eee;
+        }
+
+        .lock_guideline_button:active {
+            background-color: #ddd;
         }
 
         .lock_guideline_button img {
