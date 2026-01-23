@@ -186,7 +186,7 @@ class MainCanvas extends HTMLElement {
             this.last_mouse_pos_y = e.clientY;
 
             if(this.mouse_pos_output !== null && this.mouse_pos_output !== undefined) {
-                this.mouse_pos_output.textContent = "Mouse Pos " + String(((x + rect_large.left - rect.left) / this.scale).toFixed(2)) + " " + String((1000 - (y + rect_large.top - rect.top) / this.scale).toFixed(2));
+                this.mouse_pos_output.textContent = "Mouse Pos " + String(((x - rect.left) / this.scale).toFixed(2)) + " " + String((1000 - (y - rect.top) / this.scale).toFixed(2));
             } else {
                 this.mouse_pos_output = document.querySelector("#bottom")?.children[1].shadowRoot.getElementById("mouse_pos");
             }
@@ -637,6 +637,8 @@ class MainCanvas extends HTMLElement {
         }
     }
 
+    // 存在问题：浏览器限制 transform 范围，因此画布的实际坐标值超过一定范围后将无法正常缩放
+    // 可以改写成分块渲染
     change_canvas_size(dy, x, y, fixed) {
         if(fixed) {
             x = this.canvas_size_width / 2 * this.scale, y = this.canvas_size_height / 2 * this.scale;
