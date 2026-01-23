@@ -43,8 +43,8 @@ class MainCanvas extends HTMLElement {
         // 存储当前路径的上一个主要节点，作为加入新节点的索引之一
         this.last_on_curve_node = null;
 
-        this.scale_min = 0.01;
-        this.scale_max = 100;
+        this.scale_min = 0.02;
+        this.scale_max = 50;
         this.scale = 0.4;
 
         this.offset = { x: 0, y: 0 };
@@ -66,6 +66,9 @@ class MainCanvas extends HTMLElement {
         this.path_id_i = 0;
 
         this.mouse_pos_output = null;
+
+        this.last_mouse_pos_x = 0;
+        this.last_mouse_pos_y = 0;
     }
 
     async connectedCallback() {
@@ -127,10 +130,11 @@ class MainCanvas extends HTMLElement {
                 this.change_canvas_size(e.deltaY, x, y, true);
             }
 
-            this.update_preview(e);
             requestAnimationFrame(() => {
                 wheel_pending = false;
             });
+
+            this.update_preview(e);
         }, { passive: false });
 
         this.main_canvas_large.addEventListener("mousedown", (e) => {
@@ -141,14 +145,16 @@ class MainCanvas extends HTMLElement {
                 if(target.dataset.type !== "vertex") {
                     // 在空白位置按下左键，创建节点
                     const rect = this.main_canvas.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
+                    const rect_large = this.main_canvas_large.getBoundingClientRect();
+                    const x = e.clientX;
+                    const y = e.clientY;
+
                     if(this.current_curve === null) {
                         this.current_curve = this.curve_manager.add_curve("a");
                     }
-                    let new_curve_node = this.create_node(x, y, this.main_canvas, Bezier.param_set["1"]["oncurve_fill_color"], Bezier.param_set["1"]["oncurve_stroke_color"], "square", "test_id", "vertex", 4, 1, 0);
+                    let new_curve_node = this.create_node(x, y, this.main_canvas, this.main_canvas_large, Bezier.param_set["1"]["oncurve_fill_color"], Bezier.param_set["1"]["oncurve_stroke_color"], "square", "test_id", "vertex", 4, 1, 0);
                     
-                    this.curve_manager.add_node_by_curve(new_curve_node, "curve", x / this.scale, y / this.scale, null, this.last_on_curve_node, this.current_curve, String(this.node_id_i))?.update_svg_curve(this.main_canvas, this.scale);
+                    this.curve_manager.add_node_by_curve(new_curve_node, "curve", (x - rect.left) / this.scale, (y - rect.top) / this.scale, null, this.last_on_curve_node, this.current_curve, String(this.node_id_i))?.update_svg_curve(this.main_canvas, this.main_canvas_large, this.scale);
                     this.node_id_i += 1;
 
                     this.last_on_curve_node = new_curve_node;
@@ -173,11 +179,14 @@ class MainCanvas extends HTMLElement {
 
         window.addEventListener("mousemove", (e) => {
             const rect = this.main_canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const rect_large = this.main_canvas_large.getBoundingClientRect();
+            const x = e.clientX;
+            const y = e.clientY;
+            this.last_mouse_pos_x = e.clientX;
+            this.last_mouse_pos_y = e.clientY;
 
             if(this.mouse_pos_output !== null && this.mouse_pos_output !== undefined) {
-                this.mouse_pos_output.textContent = "Mouse Pos " + String((x / this.scale).toFixed(2)) + " " + String((1000 - y / this.scale).toFixed(2));
+                this.mouse_pos_output.textContent = "Mouse Pos " + String(((x + rect_large.left - rect.left) / this.scale).toFixed(2)) + " " + String((1000 - (y + rect_large.top - rect.top) / this.scale).toFixed(2));
             } else {
                 this.mouse_pos_output = document.querySelector("#bottom")?.children[1].shadowRoot.getElementById("mouse_pos");
             }
@@ -193,33 +202,32 @@ class MainCanvas extends HTMLElement {
                 // 按下左键时移动，正在拖动手柄
                 if(this.new_curve_handle === null && (Math.abs(x - this.painting_handle_start.x) > 1 || Math.abs(y - this.painting_handle_start.y) > 1)) {
                     // 还没有创建过手柄点，且值得创建
-                    this.new_curve_handle = this.create_node(x, y, this.main_canvas, Bezier.param_set["1"]["control_fill_color"], Bezier.param_set["1"]["control_stroke_color"], "circle", "test_id", "vertex", 4, 1, 0);
+                    this.new_curve_handle = this.create_node(x, y, this.main_canvas, this.main_canvas_large, Bezier.param_set["1"]["control_fill_color"], Bezier.param_set["1"]["control_stroke_color"], "circle", "test_id", "vertex", 4, 1, 0);
                     
-                    this.curve_manager.add_node_by_curve(this.new_curve_handle, null, x / this.scale, y / this.scale, this.last_on_curve_node, null, this.current_curve, String(this.node_id_i));
+                    this.curve_manager.add_node_by_curve(this.new_curve_handle, null, (x - rect.left) / this.scale, (y - rect.top) / this.scale, this.last_on_curve_node, null, this.current_curve, String(this.node_id_i));
                     this.node_id_i += 1;
 
                     // 添加对称手柄
                     let other_x = 2 * this.curve_manager.find_node_by_curve(this.last_on_curve_node).x - x, other_y = 2 * this.curve_manager.find_node_by_curve(this.last_on_curve_node).y - y;
-                    this.curve_manager.add_node_by_curve(this.create_node(other_x, other_y, this.main_canvas, Bezier.param_set["1"]["control_fill_color"], Bezier.param_set["1"]["control_stroke_color"], "circle", "test_id", "vertex", 4, 1, 0), null, other_x / this.scale, other_y / this.scale, this.last_on_curve_node, null, this.current_curve, String(this.node_id_i));
+                    this.curve_manager.add_node_by_curve(this.create_node(other_x, other_y, this.main_canvas, this.main_canvas_large, Bezier.param_set["1"]["control_fill_color"], Bezier.param_set["1"]["control_stroke_color"], "circle", "test_id", "vertex", 4, 1, 0), null, (other_x - rect.left) / this.scale, (other_y - rect.top) / this.scale, this.last_on_curve_node, null, this.current_curve, String(this.node_id_i));
                     this.node_id_i += 1;
                     this.curve_manager.find_node_by_curve(this.last_on_curve_node).set_both_control(this.new_curve_handle, 2);
-                    this.curve_manager.find_node_by_curve(this.last_on_curve_node).update_svg_curve(this.main_canvas, this.scale);
+                    this.curve_manager.find_node_by_curve(this.last_on_curve_node).update_svg_curve(this.main_canvas, this.main_canvas_large, this.scale);
 
                     this.add_select(this.last_on_curve_node);
-
                 } else if(this.new_curve_handle !== null) {
                     // 已经创建了手柄点，更新其坐标
                     this.new_curve_handle.style.transform = `translate(${x - Number(this.new_curve_handle.dataset.size)}px, ${y - Number(this.new_curve_handle.dataset.size)}px)`;
                     this.new_curve_handle.dataset.transformx = String(x - Number(this.new_curve_handle.dataset.size));
                     this.new_curve_handle.dataset.transformy = String(y - Number(this.new_curve_handle.dataset.size));
 
-                    this.curve_manager.find_node_by_curve(this.new_curve_handle).x = x / this.scale;
-                    this.curve_manager.find_node_by_curve(this.new_curve_handle).y = y / this.scale;
+                    this.curve_manager.find_node_by_curve(this.new_curve_handle).x = (x - rect.left) / this.scale;
+                    this.curve_manager.find_node_by_curve(this.new_curve_handle).y = (y - rect.top) / this.scale;
 
                     // 更新对称手柄
 
                     this.curve_manager.find_node_by_curve(this.last_on_curve_node).set_both_control(this.new_curve_handle, 2);
-                    this.curve_manager.find_node_by_curve(this.last_on_curve_node).update_svg_curve(this.main_canvas, this.scale);
+                    this.curve_manager.find_node_by_curve(this.last_on_curve_node).update_svg_curve(this.main_canvas, this.main_canvas_large, this.scale);
                 }
             } else if((e.buttons & 1) !== 0 && this.dragging_node_b_ready === true) {
                 // 按下左键时移动，正在拖动已创建的节点
@@ -231,15 +239,15 @@ class MainCanvas extends HTMLElement {
                 if(this.dragging_node_b) {
                     if(dragging_node_n.type !== null) {
                         // 是主节点
-                        const dx = x - Number(this.dragging_node.dataset.size) - parseFloat(this.dragging_node.dataset.transformx);
-                        const dy = y - Number(this.dragging_node.dataset.size) - parseFloat(this.dragging_node.dataset.transformy);
-                        const new_x = x / this.scale, new_y = y / this.scale;
+                        const dx = x - rect_large.left - Number(this.dragging_node.dataset.size) - parseFloat(this.dragging_node.dataset.transformx);
+                        const dy = y - rect_large.top - Number(this.dragging_node.dataset.size) - parseFloat(this.dragging_node.dataset.transformy);
+                        const new_x = (x - rect.left) / this.scale, new_y = (y - rect.top) / this.scale;
 
                         //移动场上所有选中的点
                         dragging_node_n?.sync_selected(dx, dy, new_x - dragging_node_n.x, new_y - dragging_node_n.y, this.node_selecting);
 
                         for(const node of this.node_selecting) {
-                            this.curve_manager.find_node_by_curve(node)?.update_svg_curve(this.main_canvas, this.scale);
+                            this.curve_manager.find_node_by_curve(node)?.update_svg_curve(this.main_canvas, this.main_canvas_large, this.scale);
                         }
                     } else {
                         // 是控制点
@@ -249,10 +257,10 @@ class MainCanvas extends HTMLElement {
 
                         this.dragging_node_start = { x, y };
 
-                        dragging_node_n.x = x / this.scale;
-                        dragging_node_n.y = y / this.scale;
+                        dragging_node_n.x = (x - rect.left) / this.scale;
+                        dragging_node_n.y = (y - rect.top) / this.scale;
                         dragging_node_n.nextOnCurve.set_both_control(this.dragging_node, 0);
-                        dragging_node_n.nextOnCurve.update_svg_curve(this.main_canvas, this.scale);
+                        dragging_node_n.nextOnCurve.update_svg_curve(this.main_canvas, this.main_canvas_large, this.scale);
                     }
                 }
             }
@@ -541,38 +549,41 @@ class MainCanvas extends HTMLElement {
         this.main_canvas.style.transform = `translate(${left}px, ${top}px)`;
         this.main_canvas.style.width = `${this.canvas_size_width * this.scale}px`;
         this.main_canvas.style.height = `${this.canvas_size_height * this.scale}px`;
+
+        this.update_preview({ clientX: this.last_mouse_pos_x, clientY: this.last_mouse_pos_y });
     }
 
     update_node() {
         let curves = this.curve_manager.get_curves();
+        const rect = this.main_canvas.getBoundingClientRect();
+        const rect_large = this.main_canvas_large.getBoundingClientRect();
         for(const curve of curves) {
             let start_node = curve.startNode;
             while(start_node !== null) {
 
                 start_node.main_node.style.transform =
-                    `translate(${start_node.x * this.scale - Number(start_node.main_node.dataset.size)}px, 
-                            ${start_node.y * this.scale - Number(start_node.main_node.dataset.size)}px)`;
-                start_node.main_node.dataset.transformx = String(start_node.x * this.scale - Number(start_node.main_node.dataset.size));
-                start_node.main_node.dataset.transformy = String(start_node.y * this.scale - Number(start_node.main_node.dataset.size));
+                    `translate(${start_node.x * this.scale + rect.left - rect_large.left - Number(start_node.main_node.dataset.size)}px, 
+                            ${start_node.y * this.scale + rect.top - rect_large.top - Number(start_node.main_node.dataset.size)}px)`;
+                start_node.main_node.dataset.transformx = String(start_node.x * this.scale + rect.left - rect_large.left - Number(start_node.main_node.dataset.size));
+                start_node.main_node.dataset.transformy = String(start_node.y * this.scale + rect.top - rect_large.top - Number(start_node.main_node.dataset.size));
 
                 if (start_node.control1 != null) {
                     start_node.control1.main_node.style.transform =
-                        `translate(${start_node.control1.x * this.scale - Number(start_node.control1.main_node.dataset.size)}px, 
-                                ${start_node.control1.y * this.scale - Number(start_node.control1.main_node.dataset.size)}px)`;
-                    start_node.control1.main_node.dataset.transformx = String(start_node.control1.x * this.scale - Number(start_node.control1.main_node.dataset.size));
-                    start_node.control1.main_node.dataset.transformy = String(start_node.control1.y * this.scale - Number(start_node.control1.main_node.dataset.size));
+                        `translate(${start_node.control1.x * this.scale + rect.left - rect_large.left - Number(start_node.control1.main_node.dataset.size)}px, 
+                                ${start_node.control1.y * this.scale + rect.top - rect_large.top - Number(start_node.control1.main_node.dataset.size)}px)`;
+                    start_node.control1.main_node.dataset.transformx = String(start_node.control1.x * this.scale + rect.left - rect_large.left - Number(start_node.control1.main_node.dataset.size));
+                    start_node.control1.main_node.dataset.transformy = String(start_node.control1.y * this.scale + rect.top - rect_large.top - Number(start_node.control1.main_node.dataset.size));
                 }
 
                 if (start_node.control2 != null) {
                     start_node.control2.main_node.style.transform =
-                        `translate(${start_node.control2.x * this.scale - Number(start_node.control2.main_node.dataset.size)}px, 
-                                ${start_node.control2.y * this.scale - Number(start_node.control2.main_node.dataset.size)}px)`;
-                    start_node.control2.main_node.dataset.transformx = String(start_node.control2.x * this.scale - Number(start_node.control2.main_node.dataset.size));
-                    start_node.control2.main_node.dataset.transformy = String(start_node.control2.y * this.scale - Number(start_node.control2.main_node.dataset.size));
+                        `translate(${start_node.control2.x * this.scale + rect.left - rect_large.left - Number(start_node.control2.main_node.dataset.size)}px, 
+                                ${start_node.control2.y * this.scale + rect.top - rect_large.top - Number(start_node.control2.main_node.dataset.size)}px)`;
+                    start_node.control2.main_node.dataset.transformx = String(start_node.control2.x * this.scale + rect.left - rect_large.left - Number(start_node.control2.main_node.dataset.size));
+                    start_node.control2.main_node.dataset.transformy = String(start_node.control2.y * this.scale + rect.top - rect_large.top - Number(start_node.control2.main_node.dataset.size));
                 }
 
-                start_node.update_svg_curve(this.main_canvas, this.scale);
-
+                start_node.update_svg_curve(this.main_canvas, this.main_canvas_large, this.scale);
                 start_node = start_node.nextOnCurve;
             }
         }
@@ -580,8 +591,9 @@ class MainCanvas extends HTMLElement {
 
     update_preview(e) {
         const rect = this.main_canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const rect_large = this.main_canvas_large.getBoundingClientRect();
+        const x = e.clientX - rect_large.left;
+        const y = e.clientY - rect_large.top;
         if((e.buttons & 1) === 0 && this.last_on_curve_node !== null) {
             let p0_x = x, p0_y = y;
             let p1_x = p0_x, p1_y = p0_y;
@@ -591,17 +603,28 @@ class MainCanvas extends HTMLElement {
             p2_x *= this.scale, p2_y *= this.scale;
             p3_x *= this.scale, p3_y *= this.scale;
 
+
+            p2_x += rect.left - rect_large.left;
+            p3_x += rect.left - rect_large.left;
+            p2_y += rect.top - rect_large.top;
+            p3_y += rect.top - rect_large.top;
+
             let _p3_x = this.curve_manager.find_curve_by_dom(this.last_on_curve_node).startNode.x, _p3_y = this.curve_manager.find_curve_by_dom(this.last_on_curve_node).startNode.y;
             let _p2_x = this.curve_manager.find_curve_by_dom(this.last_on_curve_node).startNode.control2?.x ?? _p3_x, _p2_y = this.curve_manager.find_curve_by_dom(this.last_on_curve_node).startNode.control2?.y ?? _p3_y;
 
             _p2_x *= this.scale, _p2_y *= this.scale;
             _p3_x *= this.scale, _p3_y *= this.scale;
 
+            _p2_x += rect.left - rect_large.left;
+            _p3_x += rect.left - rect_large.left;
+            _p2_y += rect.top - rect_large.top;
+            _p3_y += rect.top - rect_large.top;
+
 
             if(this.preview_curve === null) {
-                this.preview_curve = Bezier.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [p2_x, p2_y], [p3_x, p3_y], 0.5, Bezier.param_set["1"]["preview_color"], false, "none", this.main_canvas);
+                this.preview_curve = Bezier.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [p2_x, p2_y], [p3_x, p3_y], 0.5, Bezier.param_set["1"]["preview_color"], false, "none", this.main_canvas, this.main_canvas_large);
                 if(this.curve_manager.find_curve_by_dom(this.last_on_curve_node).closed) {
-                    this.preview_curve_1 = Bezier.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [_p2_x, _p2_y], [_p3_x, _p3_y], 0.5, Bezier.param_set["1"]["preview_color"], false, "none", this.main_canvas);
+                    this.preview_curve_1 = Bezier.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [_p2_x, _p2_y], [_p3_x, _p3_y], 0.5, Bezier.param_set["1"]["preview_color"], false, "none", this.main_canvas, this.main_canvas_large);
                 }
             } else {
                 const d = `M ${p0_x},${p0_y} C ${p1_x},${p1_y} ${p2_x},${p2_y} ${p3_x},${p3_y}`;
@@ -616,8 +639,7 @@ class MainCanvas extends HTMLElement {
 
     change_canvas_size(dy, x, y, fixed) {
         if(fixed) {
-            // x = this.canvas_size_width / 2 * this.scale, y = this.canvas_size_height / 2 * this.scale;
-            x = 10000 * this.scale, y = 10000 * this.scale;
+            x = this.canvas_size_width / 2 * this.scale, y = this.canvas_size_height / 2 * this.scale;
         }
 
         let wheel_delta = dy < 0 ? 1.1 : 0.9;
@@ -697,6 +719,7 @@ class MainCanvas extends HTMLElement {
         x,
         y,
         container,
+        container_large,
         color_fill,
         color_stroke,
         kind,
@@ -706,6 +729,7 @@ class MainCanvas extends HTMLElement {
         strokeWidth,
         rotation = 0
     ) {
+        const rect = container_large.getBoundingClientRect();
         const svgNS = "http://www.w3.org/2000/svg";
         const svg = document.createElementNS(svgNS, "svg");
         svg.setAttribute("width", (size * 2).toString());
@@ -714,9 +738,6 @@ class MainCanvas extends HTMLElement {
 
         svg.style.left = "0px";
         svg.style.top = "0px";
-        svg.style.transform = `translate(${x - size}px, ${y - size}px)`;
-        svg.dataset.transformx = String(x - size);
-        svg.dataset.transformy = String(y - size);
 
         svg.style.overflow = "visible";
         svg.style.zIndex = "100";
@@ -787,10 +808,8 @@ class MainCanvas extends HTMLElement {
 
         svg.addEventListener("mousedown", (e) => {
             if(e.button === 0) {
-
-                const rect = this.main_canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+                const x = e.clientX;
+                const y = e.clientY;
                 this.dragging_node_start = { x, y };
                 this.dragging_node_b_ready = true;
                 this.dragging_node = svg;
@@ -883,7 +902,7 @@ class MainCanvas extends HTMLElement {
             }
         });
 
-        container.appendChild(svg);
+        container_large.appendChild(svg);
         return svg;
     }
 
