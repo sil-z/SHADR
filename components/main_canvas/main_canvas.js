@@ -198,6 +198,7 @@ class MainCanvas extends HTMLElement {
                 const dy = e.clientY - this.drag_start.y;
 
                 this.offset = { x: this.offset_start.x + dx, y: this.offset_start.y + dy };
+
             } else if((e.buttons & 1) !== 0 && this.painting_handle === true) {
                 // 按下左键时移动，正在拖动手柄
                 if(this.new_curve_handle === null && (Math.abs(x - this.painting_handle_start.x) > 1 || Math.abs(y - this.painting_handle_start.y) > 1)) {
@@ -293,6 +294,12 @@ class MainCanvas extends HTMLElement {
 
         window.addEventListener("contextmenu", e => {
             e.preventDefault();
+        });
+
+        window.addEventListener("keydown", (e) => {
+            if(e.code === "Delete") {
+                this.delete_selecting();
+            }
         });
     }
 
@@ -703,6 +710,17 @@ class MainCanvas extends HTMLElement {
         temp_node?.control1?.main_node.firstElementChild.setAttribute("stroke", Bezier.param_set["1"]["control_stroke_color"]);
         temp_node?.control2?.main_node.firstElementChild.setAttribute("fill", Bezier.param_set["1"]["control_fill_color"]);
         temp_node?.control2?.main_node.firstElementChild.setAttribute("stroke", Bezier.param_set["1"]["control_stroke_color"]);
+    }
+
+    delete_selecting() {
+        if(!this.painting_handle && this.current_curve === null && !this.dragging_node_b) {
+            for(const node of this.node_selecting) {
+                this.curve_manager.find_curve_by_dom(node).remove_node_by_dom(node);
+            }
+
+            this.node_selecting = new Set();
+        }
+        
     }
 
     reset_curve_drawing() {

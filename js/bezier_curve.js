@@ -434,23 +434,47 @@ export class Curve {
         if (!nodeToRemove || nodeToRemove.type === null)
             return false;
 
+        nodeToRemove.control1_conn?.remove();
+        nodeToRemove.control2_conn?.remove();
+        main_node.remove();
+        nodeToRemove.nextCurve?.remove();
+        nodeToRemove.nextCurve = null;
+        nodeToRemove.control1?.main_node.remove();
+        nodeToRemove.control2?.main_node.remove();
+        this.curve?.remove();
+        this.curve = null;
+
         const prev = nodeToRemove.lastOnCurve;
         const next = nodeToRemove.nextOnCurve;
 
-        if (prev)
+        if (prev) {
+            prev.nextCurve?.remove();
+            prev.nextCurve = null;
             prev.nextOnCurve = next;
-        if (next)
+        }
+        if (next) {
             next.lastOnCurve = prev;
+        }
 
         if (nodeToRemove === this.startNode) {
+            this.endNode.nextCurve?.remove();
+            this.endNode.nextCurve = null;
             this.startNode = next;
+        }
+        if(nodeToRemove === this.endNode) {
+            this.endNode = prev;
         }
 
         if (nodeToRemove.main_node) {
             this.domMap.delete(nodeToRemove.main_node);
+            CurveManager.getInstance().domMap.delete(nodeToRemove.main_node);
         }
 
-        return true;
+        if(this.startNode === null && this.endNode === null) {
+            CurveManager.getInstance().remove_curve(this.id);
+        }
+
+        return this;
     }
 
     // 根据整条曲线中包含的每一段绘制出包括填充的整条曲线
@@ -482,6 +506,8 @@ export class Curve {
                 path.setAttribute("d", this.path_d);
             }
         }
+
+        return this;
     }
 
     save() {
