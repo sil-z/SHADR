@@ -103,6 +103,34 @@
             background-color: #fff;
             border-bottom: 1px solid #ddd;
         }
+
+        .bottom_tools {
+            height: auto;
+            width: 100%;
+            gap: 6px;
+            background-color: #fff;
+            display: flex;
+        }
+
+        .bottom input {
+            height: 16px;
+            width: 50px;
+            font-size: 13px;
+            padding: 2px 6px 4px 6px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .bottom input:focus {
+            outline: none;
+            border-color: #888;
+        }
+
+        .bottom span,
+        .bottom output {
+            padding: 2px 2px 4px 2px;
+            font-size: 13px;
+        }
     </style>
     
 </head>
@@ -120,13 +148,27 @@
     </div>
 
     <div class="bottom" id="bottom">
-        <script type="module" src="components/node_editor/node_editor.js"></script>
-        <node-editor></node-editor>
-        <!-- <script type="module" src="components/pen_editor/pen_editor.js"></script>
-        <pen-editor></pen-editor> -->
+        <div class="bottom_tools">
+            <span>Single node selected.</span>
+            <span>X</span>
+            <input type="text" placeholder="0.00">
+            <span>Y</span>
+            <input type="text" placeholder="0.00">
+            <span>In X</span>
+            <input type="text" placeholder="0.00">
+            <span>In Y</span>
+            <input type="text" placeholder="0.00">
+            <span>Out X</span>
+            <input type="text" placeholder="0.00">
+            <span>Out Y</span>
+            <input type="text" placeholder="0.00">
+            <span>In Angle</span>
+            <input type="text" placeholder="0.00">
+            <span>Out Angle</span>
+            <input type="text" placeholder="0.00">
+            <output id="mouse_pos" style="margin-left: auto;">Mouse Pos 0.00 0.00</output>
+        </div>
     </div>
-    
-    
 
     <div class="middle">
         

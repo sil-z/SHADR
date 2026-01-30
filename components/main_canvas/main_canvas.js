@@ -1,4 +1,5 @@
-import * as Bezier from "../../js/bezier_curve.js";
+import * as BezierCurve from "../../js/bezier_curve.js";
+import * as FileUtils from "../../js/file_utils.js"
 
 class MainCanvas extends HTMLElement {
     constructor() {
@@ -52,7 +53,7 @@ class MainCanvas extends HTMLElement {
 
         this.guideline_lock = false;
 
-        this.curve_manager = Bezier.CurveManager.getInstance();
+        this.curve_manager = BezierCurve.CurveManager.getInstance();
         this.current_curve = null;
 
         this.node_selecting = new Set();
@@ -111,6 +112,14 @@ class MainCanvas extends HTMLElement {
         let wheel_pending = false;
         let last_event = null;
 
+        if(navigator.storage && navigator.storage.persist) {
+            const persisted = await navigator.storage.persisted();
+            if(!persisted) {
+                const granted = await navigator.storage.persist();
+                console.log(granted);
+            }
+        }
+
         window.addEventListener("wheel", (e) => {
 
             e.preventDefault();
@@ -152,7 +161,7 @@ class MainCanvas extends HTMLElement {
                     if(this.current_curve === null) {
                         this.current_curve = this.curve_manager.add_curve("a");
                     }
-                    let new_curve_node = this.create_node(x, y, this.main_canvas, this.main_canvas_large, Bezier.param_set["1"]["oncurve_fill_color"], Bezier.param_set["1"]["oncurve_stroke_color"], "square", "test_id", "vertex", 4, 1, 0);
+                    let new_curve_node = this.create_node(x, y, this.main_canvas, this.main_canvas_large, BezierCurve.param_set["1"]["oncurve_fill_color"], BezierCurve.param_set["1"]["oncurve_stroke_color"], "square", "test_id", "vertex", 4, 1, 0);
                     
                     this.curve_manager.add_node_by_curve(new_curve_node, "curve", (x - rect.left) / this.scale, (y - rect.top) / this.scale, null, this.last_on_curve_node, this.current_curve, String(this.node_id_i))?.update_svg_curve(this.main_canvas, this.main_canvas_large, this.scale);
                     this.node_id_i += 1;
@@ -174,6 +183,7 @@ class MainCanvas extends HTMLElement {
                 }
             } else if(e.button === 2) {
                 this.reset_curve_drawing();
+                console.log(this.save_file());
             }
         }, { passive: false });
 
@@ -188,7 +198,7 @@ class MainCanvas extends HTMLElement {
             if(this.mouse_pos_output !== null && this.mouse_pos_output !== undefined) {
                 this.mouse_pos_output.textContent = "Mouse Pos " + String(((x - rect.left) / this.scale).toFixed(2)) + " " + String((1000 - (y - rect.top) / this.scale).toFixed(2));
             } else {
-                this.mouse_pos_output = document.querySelector("#bottom")?.children[1].shadowRoot.getElementById("mouse_pos");
+                this.mouse_pos_output = document.querySelector("#mouse_pos");
             }
 
             if((e.buttons & 4) !== 0 && this.dragging === true && this.is_mouse_in_element(e, this.main_canvas_large)) {
@@ -203,14 +213,14 @@ class MainCanvas extends HTMLElement {
                 // 按下左键时移动，正在拖动手柄
                 if(this.new_curve_handle === null && (Math.abs(x - this.painting_handle_start.x) > 1 || Math.abs(y - this.painting_handle_start.y) > 1)) {
                     // 还没有创建过手柄点，且值得创建
-                    this.new_curve_handle = this.create_node(x, y, this.main_canvas, this.main_canvas_large, Bezier.param_set["1"]["control_fill_color"], Bezier.param_set["1"]["control_stroke_color"], "circle", "test_id", "vertex", 4, 1, 0);
+                    this.new_curve_handle = this.create_node(x, y, this.main_canvas, this.main_canvas_large, BezierCurve.param_set["1"]["control_fill_color"], BezierCurve.param_set["1"]["control_stroke_color"], "circle", "test_id", "vertex", 4, 1, 0);
                     
                     this.curve_manager.add_node_by_curve(this.new_curve_handle, null, (x - rect.left) / this.scale, (y - rect.top) / this.scale, this.last_on_curve_node, null, this.current_curve, String(this.node_id_i));
                     this.node_id_i += 1;
 
                     // 添加对称手柄
                     let other_x = 2 * this.curve_manager.find_node_by_curve(this.last_on_curve_node).x - x, other_y = 2 * this.curve_manager.find_node_by_curve(this.last_on_curve_node).y - y;
-                    this.curve_manager.add_node_by_curve(this.create_node(other_x, other_y, this.main_canvas, this.main_canvas_large, Bezier.param_set["1"]["control_fill_color"], Bezier.param_set["1"]["control_stroke_color"], "circle", "test_id", "vertex", 4, 1, 0), null, (other_x - rect.left) / this.scale, (other_y - rect.top) / this.scale, this.last_on_curve_node, null, this.current_curve, String(this.node_id_i));
+                    this.curve_manager.add_node_by_curve(this.create_node(other_x, other_y, this.main_canvas, this.main_canvas_large, BezierCurve.param_set["1"]["control_fill_color"], BezierCurve.param_set["1"]["control_stroke_color"], "circle", "test_id", "vertex", 4, 1, 0), null, (other_x - rect.left) / this.scale, (other_y - rect.top) / this.scale, this.last_on_curve_node, null, this.current_curve, String(this.node_id_i));
                     this.node_id_i += 1;
                     this.curve_manager.find_node_by_curve(this.last_on_curve_node).set_both_control(this.new_curve_handle, 2);
                     this.curve_manager.find_node_by_curve(this.last_on_curve_node).update_svg_curve(this.main_canvas, this.main_canvas_large, this.scale);
@@ -629,9 +639,9 @@ class MainCanvas extends HTMLElement {
 
 
             if(this.preview_curve === null) {
-                this.preview_curve = Bezier.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [p2_x, p2_y], [p3_x, p3_y], 0.5, Bezier.param_set["1"]["preview_color"], false, "none", this.main_canvas, this.main_canvas_large);
+                this.preview_curve = BezierCurve.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [p2_x, p2_y], [p3_x, p3_y], 0.5, BezierCurve.param_set["1"]["preview_color"], false, "none", this.main_canvas, this.main_canvas_large);
                 if(this.curve_manager.find_curve_by_dom(this.last_on_curve_node).closed) {
-                    this.preview_curve_1 = Bezier.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [_p2_x, _p2_y], [_p3_x, _p3_y], 0.5, Bezier.param_set["1"]["preview_color"], false, "none", this.main_canvas, this.main_canvas_large);
+                    this.preview_curve_1 = BezierCurve.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [_p2_x, _p2_y], [_p3_x, _p3_y], 0.5, BezierCurve.param_set["1"]["preview_color"], false, "none", this.main_canvas, this.main_canvas_large);
                 }
             } else {
                 const d = `M ${p0_x},${p0_y} C ${p1_x},${p1_y} ${p2_x},${p2_y} ${p3_x},${p3_y}`;
@@ -678,13 +688,13 @@ class MainCanvas extends HTMLElement {
 
     clear_select() {
         for(const node of this.node_selecting) {
-            node.firstElementChild.setAttribute("fill", Bezier.param_set["1"]["oncurve_fill_color"]);
-            node.firstElementChild.setAttribute("stroke", Bezier.param_set["1"]["oncurve_stroke_color"]);
+            node.firstElementChild.setAttribute("fill", BezierCurve.param_set["1"]["oncurve_fill_color"]);
+            node.firstElementChild.setAttribute("stroke", BezierCurve.param_set["1"]["oncurve_stroke_color"]);
             const temp_node = this.curve_manager.find_node_by_curve(node);
-            temp_node?.control1?.main_node.firstElementChild.setAttribute("fill", Bezier.param_set["1"]["control_fill_color"]);
-            temp_node?.control1?.main_node.firstElementChild.setAttribute("stroke", Bezier.param_set["1"]["control_stroke_color"]);
-            temp_node?.control2?.main_node.firstElementChild.setAttribute("fill", Bezier.param_set["1"]["control_fill_color"]);
-            temp_node?.control2?.main_node.firstElementChild.setAttribute("stroke", Bezier.param_set["1"]["control_stroke_color"]);
+            temp_node?.control1?.main_node.firstElementChild.setAttribute("fill", BezierCurve.param_set["1"]["control_fill_color"]);
+            temp_node?.control1?.main_node.firstElementChild.setAttribute("stroke", BezierCurve.param_set["1"]["control_stroke_color"]);
+            temp_node?.control2?.main_node.firstElementChild.setAttribute("fill", BezierCurve.param_set["1"]["control_fill_color"]);
+            temp_node?.control2?.main_node.firstElementChild.setAttribute("stroke", BezierCurve.param_set["1"]["control_stroke_color"]);
         }
 
         this.node_selecting.clear();
@@ -692,24 +702,24 @@ class MainCanvas extends HTMLElement {
 
     add_select(new_node) {
         this.node_selecting.add(new_node);
-        new_node.firstElementChild.setAttribute("stroke", Bezier.param_set["1"]["selected_stroke_color"]);
-        new_node.firstElementChild.setAttribute("fill", Bezier.param_set["1"]["selected_fill_color"]);
+        new_node.firstElementChild.setAttribute("stroke", BezierCurve.param_set["1"]["selected_stroke_color"]);
+        new_node.firstElementChild.setAttribute("fill", BezierCurve.param_set["1"]["selected_fill_color"]);
         const temp_node = this.curve_manager.find_node_by_curve(new_node);
-        temp_node?.control1?.main_node.firstElementChild.setAttribute("fill", Bezier.param_set["1"]["selected_fill_color"]);
-        temp_node?.control1?.main_node.firstElementChild.setAttribute("stroke", Bezier.param_set["1"]["selected_stroke_color"]);
-        temp_node?.control2?.main_node.firstElementChild.setAttribute("fill", Bezier.param_set["1"]["selected_fill_color"]);
-        temp_node?.control2?.main_node.firstElementChild.setAttribute("stroke", Bezier.param_set["1"]["selected_stroke_color"]);
+        temp_node?.control1?.main_node.firstElementChild.setAttribute("fill", BezierCurve.param_set["1"]["selected_fill_color"]);
+        temp_node?.control1?.main_node.firstElementChild.setAttribute("stroke", BezierCurve.param_set["1"]["selected_stroke_color"]);
+        temp_node?.control2?.main_node.firstElementChild.setAttribute("fill", BezierCurve.param_set["1"]["selected_fill_color"]);
+        temp_node?.control2?.main_node.firstElementChild.setAttribute("stroke", BezierCurve.param_set["1"]["selected_stroke_color"]);
     }
 
     remove_select(old_node) {
         this.node_selecting.delete(old_node);
-        old_node.firstElementChild.setAttribute("stroke", Bezier.param_set["1"]["oncurve_stroke_color"]);
-        old_node.firstElementChild.setAttribute("fill", Bezier.param_set["1"]["oncurve_fill_color"]);
+        old_node.firstElementChild.setAttribute("stroke", BezierCurve.param_set["1"]["oncurve_stroke_color"]);
+        old_node.firstElementChild.setAttribute("fill", BezierCurve.param_set["1"]["oncurve_fill_color"]);
         const temp_node = this.curve_manager.find_node_by_curve(old_node);
-        temp_node?.control1?.main_node.firstElementChild.setAttribute("fill", Bezier.param_set["1"]["control_fill_color"]);
-        temp_node?.control1?.main_node.firstElementChild.setAttribute("stroke", Bezier.param_set["1"]["control_stroke_color"]);
-        temp_node?.control2?.main_node.firstElementChild.setAttribute("fill", Bezier.param_set["1"]["control_fill_color"]);
-        temp_node?.control2?.main_node.firstElementChild.setAttribute("stroke", Bezier.param_set["1"]["control_stroke_color"]);
+        temp_node?.control1?.main_node.firstElementChild.setAttribute("fill", BezierCurve.param_set["1"]["control_fill_color"]);
+        temp_node?.control1?.main_node.firstElementChild.setAttribute("stroke", BezierCurve.param_set["1"]["control_stroke_color"]);
+        temp_node?.control2?.main_node.firstElementChild.setAttribute("fill", BezierCurve.param_set["1"]["control_fill_color"]);
+        temp_node?.control2?.main_node.firstElementChild.setAttribute("stroke", BezierCurve.param_set["1"]["control_stroke_color"]);
     }
 
     delete_selecting() {
@@ -924,6 +934,108 @@ class MainCanvas extends HTMLElement {
 
         container_large.appendChild(svg);
         return svg;
+    }
+
+    save_file() {
+        let file = {
+            "canvas_size_width": this.canvas_size_width,
+            "canvas_size_height": this.canvas_size_height,
+            "family_name": "default",
+            "basic_spacing": 1000,
+            "editor_scale": this.scale,
+            "editor_offset_x": this.offset.x,
+            "editor_offset_y": this.offset.y,
+            "editor_guideline_h": [
+                500
+            ],
+            "editor_guideline_v": [
+                500
+            ],
+            "editor_guideline_lock": false,
+            "editor_edit_mode": "pen",
+            "editor_cutting_board": [
+                "a"
+            ],
+            "editor_fill_color": BezierCurve.param_set["1"]["path_fill_color"],
+            "editor_stroke_color": BezierCurve.param_set["1"]["path_stroke_color"],
+            "ch": {
+
+            },
+            "components": {
+
+            }
+        };
+
+        let component_id = "1";
+        let ch = "a";
+        file.ch[ch] = {
+            "variant": {
+
+            },
+            "spacing": 1,
+            "hooks_id": [
+
+            ],
+            "components": {
+
+            },
+            "editor_hide": false, "editor_lock": false
+        };
+        file.ch[ch].components[component_id] = {
+            "component_id": "1",
+            "transform": "none"
+        };
+        file.components[component_id] = {
+            "paths": {
+
+            },
+            "editor_hide": false, "editor_lock": false,
+            "editor_selected": false,
+            "components": [
+
+            ]
+        };
+        let path_id_cnt = 0;
+        for(let curve of this.curve_manager.get_curves()) {
+            let path_id = String(path_id_cnt);
+            path_id_cnt += 1;
+            file.components[component_id].paths[path_id] = {
+                "fill": curve.closed,
+                "stroke_width": curve.stroke_width,
+                "render_mode": "auto",
+                "vertices": {
+
+                },
+                "editor_hide": false, "editor_lock": false,
+                "editor_selected": false
+            };
+            let this_node = curve.startNode;
+            while(this_node != null) {
+                file.components[component_id].paths[path_id].vertices[this_node.node_id] = {
+                    "x": this_node.x,
+                    "y": this.canvas_size_height - this_node.y,
+                    "start": this_node === curve.startNode,
+                    "end": this_node === curve.endNode,
+                    "smooth": this_node.smooth,
+                    "editor_selected": false, ////
+                    "relate_last": this_node.node_id, "relate_next": this_node.node_id,
+                    "control_1": {
+                        "active": this_node.control1 !== null,
+                        "x": this_node.control1?.x ?? this_node.x,
+                        "y": this.canvas_size_height - (this_node.control1?.y ?? this_node.y),
+                    },
+                    "control_2": {
+                        "active": this_node.control2 !== null,
+                        "x": this_node.control2?.x ?? this_node.x,
+                        "y": this.canvas_size_height - (this_node.control2?.y ?? this_node.y),
+                    }
+                };
+
+                this_node = this_node.nextOnCurve;
+            }
+        }
+
+        return JSON.stringify(file, null, 4);
     }
 
 }
