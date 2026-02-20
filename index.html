@@ -51,15 +51,32 @@
         .placeholder {
             border: 1px dashed #ddd;
             border-radius: 8px;
+
             display: flex;
-            overflow: hidden;
-            flex-wrap: wrap;
+            flex-direction: column;
+
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+
             margin-bottom: 8px;
+        }
+
+        .placeholder::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .placeholder::-webkit-scrollbar-thumb {
+            background: #eee;
+            border-radius: 4px;
+        }
+
+        .placeholder::-webkit-scrollbar-thumb:hover {
+            background: #e0e0e0;
         }
 
         .placeholder span {
             display: block;
-            font-size: 12px;
             margin: 4px 8px;
             width: 100%;
         }
@@ -81,7 +98,7 @@
         }
 
         .tool_button {
-            padding: 4px 8px;
+            padding: 2px 8px;
             border-radius: 8px;
             border: 1px solid transparent;
             cursor: default;
@@ -97,7 +114,7 @@
 
         .bottom {
             height: auto;
-            padding: 4px 8px;
+            padding: 0px 8px;
             display: block;
             gap: 6px;
             background-color: #fff;
@@ -107,7 +124,7 @@
         .bottom_tools {
             height: auto;
             width: 100%;
-            gap: 6px;
+            gap: 0px;
             background-color: #fff;
             display: flex;
         }
@@ -126,10 +143,80 @@
             border-color: #888;
         }
 
-        .bottom span,
         .bottom output {
-            padding: 2px 2px 4px 2px;
-            font-size: 13px;
+            padding: 6px 2px 4px 2px;
+            font-size: 11px;
+            color: #555;
+        }
+
+        .tool_separator {
+            width: 0;
+            margin: 4px 6px;
+            border-left: 1px dashed #ddd;
+            align-self: stretch;
+        }
+
+        .property_panel {
+            display: flex;
+            flex-direction: column;
+            padding: 6px;
+            gap: 8px;
+            height: 20%;
+        }
+
+        .property_group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .property_group_title {
+            font-size: 11px;
+            color: #888;
+            padding-left: 4px;
+            padding-top: 2px;
+        }
+
+        .property_single_row {
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 12px;
+            align-items: center;
+            min-width: 0;
+            padding-right: 4px;
+            padding-left: 4px;
+            padding-bottom: 2px;
+        }
+
+        .property_panel label {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .property_panel input {
+            height: 16px;
+            font-size: 11px;
+            padding: 1px 4px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            color: #888;
+        }
+
+        .property_panel input:hover {
+            border-color: #bbb;
+        }
+
+        .property_panel input:focus {
+            outline: none;
+            border-color: #888;
+        }
+
+        .property_panel label,
+        .placeholder span {
+            white-space: nowrap;
         }
     </style>
     
@@ -149,24 +236,21 @@
 
     <div class="bottom" id="bottom">
         <div class="bottom_tools">
-            <span>Single node selected.</span>
-            <span>X</span>
-            <input type="text" placeholder="0.00">
-            <span>Y</span>
-            <input type="text" placeholder="0.00">
-            <span>In X</span>
-            <input type="text" placeholder="0.00">
-            <span>In Y</span>
-            <input type="text" placeholder="0.00">
-            <span>Out X</span>
-            <input type="text" placeholder="0.00">
-            <span>Out Y</span>
-            <input type="text" placeholder="0.00">
-            <span>In Angle</span>
-            <input type="text" placeholder="0.00">
-            <span>Out Angle</span>
-            <input type="text" placeholder="0.00">
+            <div class="tool_button">
+                <img src="./assets/Bootstrap_Icons/cursor.svg" alt="Select" style="width: 14px; height: 14px;">
+            </div>
+            <div class="tool_button">
+                <img src="./assets/Bootstrap_Icons/bezier.svg" alt="Node" style="width: 14px; height: 14px;">
+            </div>
+            <div class="tool_button">
+                <img src="./assets/Bootstrap_Icons/vector-pen.svg" alt="Pen" style="width: 14px; height: 14px;">
+            </div>
+            <div class="tool_button">
+                <img src="./assets/Bootstrap_Icons/circle.svg" alt="Ellipse" style="width: 14px; height: 14px;">
+            </div>
+            <div class="tool_separator"></div>
             <output id="mouse_pos" style="margin-left: auto;">Mouse Pos 0.00 0.00</output>
+            
         </div>
     </div>
 
@@ -174,21 +258,56 @@
         
         <div class="right">
             <div class="placeholder">
-                <span>Editor Mode</span>
             </div>
-            <div class="placeholder">
-                <div class="tool_button">
-                    <img src="./assets/Bootstrap_Icons/cursor.svg" alt="Select" style="width: 14px; height: 14px;">
+            <div class="placeholder property_panel">
+                <div class="property_group">
+                    <div class="property_group_title">Position</div>
+
+                    <div class="property_single_row">
+                        <label>X</label>
+                        <input type="text">
+                    </div>
+                    <div class="property_single_row">
+                        <label>Y</label>
+                        <input type="text">
+                    </div>
                 </div>
-                <div class="tool_button">
-                    <img src="./assets/Bootstrap_Icons/bezier.svg" alt="Node" style="width: 14px; height: 14px;">
+
+                <div class="property_group">
+                    <div class="property_group_title">Handles</div>
+
+                    <div class="property_single_row">
+                        <label>In X</label>
+                        <input type="text">
+                    </div>
+                    <div class="property_single_row">
+                        <label>In Y</label>
+                        <input type="text">
+                    </div>
+
+                    <div class="property_single_row">
+                        <label>Out X</label>
+                        <input type="text">
+                    </div>
+                    <div class="property_single_row">
+                        <label>Out Y</label>
+                        <input type="text">
+                    </div>
                 </div>
-                <div class="tool_button">
-                    <img src="./assets/Bootstrap_Icons/vector-pen.svg" alt="Pen" style="width: 14px; height: 14px;">
+
+                <div class="property_group">
+                    <div class="property_group_title">Angles</div>
+
+                    <div class="property_single_row">
+                        <label>In Angle</label>
+                        <input type="text">
+                    </div>
+                    <div class="property_single_row">
+                        <label>Out Angle</label>
+                        <input type="text">
+                    </div>
                 </div>
-                <div class="tool_button">
-                    <img src="./assets/Bootstrap_Icons/circle.svg" alt="Ellipse" style="width: 14px; height: 14px;">
-                </div>
+
             </div>
         </div>
 

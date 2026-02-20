@@ -253,7 +253,7 @@ export class CurveNode {
         }
 
         let temp_start = CurveManager.getInstance().find_curve_by_dom(this.main_node);
-        if(this.nextOnCurve === null && temp_start?.closed && temp_start.startNode !== this) {
+        if(temp_start?.closed && temp_start.startNode !== this && temp_start.endNode === this && temp_start.startNode !== null && this.nextOnCurve === null) {
             let p0_x = this.x, p0_y = this.y;
             let p1_x = (this.control1?.x ?? p0_x), p1_y = (this.control1?.y ?? p0_y);
             let p3_x = temp_start.startNode.x, p3_y = temp_start.startNode.y;
@@ -350,8 +350,55 @@ export class CurveNode {
             }
         }
 
-        const curve_manager = CurveManager.getInstance();
-        curve_manager.find_curve_by_dom(this.main_node)?.update_path(container, container_large);
+        if(temp_start?.closed && temp_start.startNode === this && temp_start.endNode !== this && temp_start.endNode !== null && this.lastOnCurve === null) {
+            let p3_x = this.x, p3_y = this.y;
+            let p2_x = (this.control2?.x ?? p3_x), p2_y = (this.control2?.y ?? p3_y);
+            let p0_x = temp_start.endNode.x, p0_y = temp_start.endNode.y;
+            let p1_x = (temp_start.endNode.control1?.x ?? p0_x),
+                p1_y = (temp_start.endNode.control1?.y ?? p0_y);
+
+            p0_x *= scale;
+            p0_y *= scale;
+            p1_x *= scale;
+            p1_y *= scale;
+            p2_x *= scale;
+            p2_y *= scale;
+            p3_x *= scale;
+            p3_y *= scale;
+
+            p0_x += rect.left - rect_large.left;
+            p1_x += rect.left - rect_large.left;
+            p2_x += rect.left - rect_large.left;
+            p3_x += rect.left - rect_large.left;
+            p0_y += rect.top - rect_large.top;
+            p1_y += rect.top - rect_large.top;
+            p2_y += rect.top - rect_large.top;
+            p3_y += rect.top - rect_large.top;
+            
+            if(temp_start.endNode.nextCurve === null) {
+                temp_start.endNode.nextCurve = create_bezier_svg(
+                    [p0_x, p0_y],
+                    [p1_x, p1_y],
+                    [p2_x, p2_y],
+                    [p3_x, p3_y],
+                    stroke_width,
+                    param_set["1"]["path_stroke_color"],
+                    false,
+                    "none",
+                    container,
+                    container_large
+                );
+            } else {
+                const path = temp_start.endNode.nextCurve.querySelector("path");
+                if(path) {
+                    const d =
+                        `M ${p0_x},${p0_y} C ${p1_x},${p1_y} ${p2_x},${p2_y} ${p3_x},${p3_y}`;
+                    path.setAttribute("d", d);
+                }
+            }
+        }
+
+        temp_start?.update_path(container, container_large);
     }
 }
 
@@ -429,7 +476,7 @@ export class Curve {
     }
 
     // 根据页面元素移除对象
-    remove_node_by_dom(main_node) {
+    remove_node_by_dom(main_node, container, container_large, scale) {
         const nodeToRemove = this.domMap.get(main_node);
         if (!nodeToRemove || nodeToRemove.type === null)
             return false;
@@ -472,6 +519,12 @@ export class Curve {
 
         if(this.startNode === null && this.endNode === null) {
             CurveManager.getInstance().remove_curve(this.id);
+        }
+
+        if(prev) {
+            prev.update_svg_curve(container, container_large, scale);
+        } else if(next) {
+            next.update_svg_curve(container, container_large, scale);
         }
 
         return this;

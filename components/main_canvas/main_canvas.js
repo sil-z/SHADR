@@ -121,9 +121,8 @@ class MainCanvas extends HTMLElement {
         }
 
         window.addEventListener("wheel", (e) => {
-
-            e.preventDefault();
-
+            if(e.ctrlKey || e.altKey)
+                e.preventDefault();
             if(wheel_pending)
                 return;
             wheel_pending = true;
@@ -133,10 +132,18 @@ class MainCanvas extends HTMLElement {
             let x = e.clientX - rect.left;
             let y = e.clientY - rect.top;
 
-            if (e.ctrlKey && this.is_mouse_in_element(e, this.main_canvas_large)) {
-                this.change_canvas_size(e.deltaY, x, y, false);
-            } else if (e.altKey && this.is_mouse_in_element(e, this.main_canvas_large)) {
-                this.change_canvas_size(e.deltaY, x, y, true);
+            if (e.ctrlKey) {
+                e.preventDefault();
+                if(this.is_mouse_in_element(e, this.main_canvas_large))
+                {
+                    this.change_canvas_size(e.deltaY, x, y, false);
+                }
+            } else if (e.altKey) {
+                e.preventDefault();
+                if(this.is_mouse_in_element(e, this.main_canvas_large))
+                {
+                    this.change_canvas_size(e.deltaY, x, y, true);
+                }
             }
 
             requestAnimationFrame(() => {
@@ -640,8 +647,10 @@ class MainCanvas extends HTMLElement {
 
             if(this.preview_curve === null) {
                 this.preview_curve = BezierCurve.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [p2_x, p2_y], [p3_x, p3_y], 0.5, BezierCurve.param_set["1"]["preview_color"], false, "none", this.main_canvas, this.main_canvas_large);
+                this.preview_curve.style.display = "none";
                 if(this.curve_manager.find_curve_by_dom(this.last_on_curve_node).closed) {
                     this.preview_curve_1 = BezierCurve.create_bezier_svg([p0_x, p0_y], [p1_x, p1_y], [_p2_x, _p2_y], [_p3_x, _p3_y], 0.5, BezierCurve.param_set["1"]["preview_color"], false, "none", this.main_canvas, this.main_canvas_large);
+                    this.preview_curve_1.style.display = "none";
                 }
             } else {
                 const d = `M ${p0_x},${p0_y} C ${p1_x},${p1_y} ${p2_x},${p2_y} ${p3_x},${p3_y}`;
@@ -725,7 +734,7 @@ class MainCanvas extends HTMLElement {
     delete_selecting() {
         if(!this.painting_handle && this.current_curve === null && !this.dragging_node_b) {
             for(const node of this.node_selecting) {
-                this.curve_manager.find_curve_by_dom(node).remove_node_by_dom(node);
+                this.curve_manager.find_curve_by_dom(node).remove_node_by_dom(node, this.main_canvas, this.main_canvas_large, this.scale);
             }
 
             this.node_selecting = new Set();
