@@ -18,26 +18,63 @@
         }
 
         .top {
-            height: auto;
             display: flex;
             font-size: 13px;
-            user-select: none;
-            background-color: #ffffff;
+            color: #000;
+            background-color: #fff;
             border-bottom: 1px solid #ddd;
         }
 
         .item {
             padding: 2px 12px 4px 12px;
             border-radius: 8px;
-            cursor: default;
             border: 1px solid transparent;
+            cursor: default;
         }
 
-        .item:hover {
+        .tool_button {
+            padding: 2px 8px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            cursor: default;
+            position: relative;
+        }
+
+        .tool_button::after {
+            content: attr(data-tip);
+            position: absolute;
+            left: 0%;
+            top: calc(100% + 4px);
+
+            font-size: 12px;
+            color: #444;
+            background: #fff;
+
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+
+            white-space: nowrap;
+            pointer-events: none;
+
+            opacity: 0;
+            transition: opacity 0.08s ease;
+
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            z-index: 1000;
+        }
+
+        .tool_button:hover::after {
+            opacity: 1;
+        }
+
+        .item:hover,
+        .tool_button:hover {
             background-color: #eee;
         }
 
-        .item:active {
+        .item:active,
+        .tool_button:active {
             background-color: #ddd;
         }
 
@@ -46,87 +83,40 @@
             display: flex;
             padding: 4px;
             gap: 4px;
+            overflow: hidden;
         }
 
-        .placeholder {
-            border: 1px dashed #ddd;
-            border-radius: 8px;
-
-            display: flex;
-            flex-direction: column;
-
-            min-height: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
-
-            margin-bottom: 8px;
-        }
-
-        .placeholder::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .placeholder::-webkit-scrollbar-thumb {
-            background: #eee;
-            border-radius: 4px;
-        }
-
-        .placeholder::-webkit-scrollbar-thumb:hover {
-            background: #e0e0e0;
-        }
-
-        .placeholder span {
-            display: block;
-            margin: 4px 8px;
-            width: 100%;
-        }
-
-        .left {
-            flex: auto;
+        .left,
+        .right {
             background-color: #fff;
             border: 1px solid #ddd;
             border-radius: 8px;
+        }
+
+        .left {
+            flex: 1;
+            min-width: 120px;
             overflow: hidden;
         }
 
         .right {
             width: 20%;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 8px 8px;
-        }
-
-        .tool_button {
-            padding: 2px 8px;
-            border-radius: 8px;
-            border: 1px solid transparent;
-            cursor: default;
-        }
-
-        .tool_button:hover {
-            background-color: #eee;
-        }
-
-        .tool_button:active {
-            background-color: #ddd;
+            min-width: 120px;
+            max-width: 80%;
+            resize: horizontal;
+            overflow: auto;
+            padding: 8px;
         }
 
         .bottom {
-            height: auto;
-            padding: 0px 8px;
-            display: block;
-            gap: 6px;
+            padding: 0 8px;
             background-color: #fff;
             border-bottom: 1px solid #ddd;
         }
 
         .bottom_tools {
-            height: auto;
-            width: 100%;
-            gap: 0px;
-            background-color: #fff;
             display: flex;
+            width: 100%;
         }
 
         .bottom input {
@@ -144,16 +134,51 @@
         }
 
         .bottom output {
-            padding: 6px 2px 4px 2px;
-            font-size: 11px;
-            color: #555;
+            padding: 4px 2px 4px 2px;
+            font-size: 13px;
+            color: #000;
         }
 
         .tool_separator {
-            width: 0;
             margin: 4px 6px;
             border-left: 1px dashed #ddd;
             align-self: stretch;
+        }
+
+        .placeholder {
+            border: 1px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow-x: hidden;
+            overflow-y: auto;
+            margin-bottom: 8px;
+        }
+
+        .placeholder::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;  /* 横向滚动条高度 */
+        }
+
+        .placeholder::-webkit-scrollbar-thumb {
+            background: #eee;
+            border-radius: 4px;
+        }
+
+        .placeholder::-webkit-scrollbar-thumb:hover {
+            background: #e0e0e0;
+        }
+
+        .placeholder span,
+        .property_panel label {
+            white-space: nowrap;
+        }
+
+        .placeholder span {
+            display: block;
+            margin: 4px 8px;
+            width: 100%;
         }
 
         .property_panel {
@@ -161,7 +186,29 @@
             flex-direction: column;
             padding: 6px;
             gap: 8px;
-            height: 20%;
+        }
+
+        .title_panel {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-bottom: 3px;
+        }
+
+        .panel_title {
+            font-size: 13px;
+            color: #555;
+            padding-left: 4px;
+        }
+
+        .property_panel {
+            max-height: 40%;
+            overflow-y: hidden;
+            scrollbar-gutter: stable;
+        }
+
+        .property_panel:hover {
+            overflow-y: auto;
         }
 
         .property_group {
@@ -173,36 +220,33 @@
         .property_group_title {
             font-size: 11px;
             color: #888;
-            padding-left: 4px;
-            padding-top: 2px;
+            padding: 0px 0 0 4px;
         }
 
         .property_single_row {
             display: grid;
-            grid-template-columns: 60px 1fr;
+            grid-template-columns: 100px 1fr;
             gap: 12px;
             align-items: center;
             min-width: 0;
-            padding-right: 4px;
-            padding-left: 4px;
-            padding-bottom: 2px;
+            padding: 2px 4px 2px 4px;
         }
 
         .property_panel label {
-            font-size: 12px;
+            font-size: 13px;
             color: #555;
         }
 
         .property_panel input {
             height: 16px;
             font-size: 11px;
-            padding: 1px 4px;
+            padding: 0px 4px;
             border: 1px solid #ddd;
             border-radius: 5px;
             width: 100%;
             min-width: 0;
             box-sizing: border-box;
-            color: #888;
+            color: #000;
         }
 
         .property_panel input:hover {
@@ -214,10 +258,160 @@
             border-color: #888;
         }
 
-        .property_panel label,
-        .placeholder span {
+        .glyphs_panel {
+            padding: 6px;
+            font-size: 13px;
+        }
+
+        .tree_panel {
+            padding: 6px;
+            font-size: 13px;
+            overflow-x: auto;       /* 横向滚动 */
+            overflow-y: hidden;       /* 纵向滚动 */
+            white-space: nowrap;    /* 保持一行显示，不折行 */
+            scrollbar-gutter: stable;
+            max-height: 20%;
+            padding-bottom: 4px;
+        }
+
+        .tree_panel:hover {
+            overflow-x: auto;       /* 横向滚动 */
+            overflow-y: auto;       /* 纵向滚动 */
+        }
+
+        .tree_item {
+            display: flex;
+            align-items: center;
+            position: relative;
+            gap: 4px;
+            padding: 2px 6px;
+            cursor: default;
+            user-select: none;
+            min-width: max-content; /* 内容宽度决定最小宽度 */
+        }
+
+        .tree_item:hover {
+            background-color: #eee;
+        }
+
+        .tree_item.selected {
+            background-color: #ddd;
+        }
+
+        .tree_left {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            min-width: 0;
+            margin-left: 30px;
+        }
+
+        .tree_indent {
+            width: 0px;
+            flex-shrink: 0;
+        }
+
+        .tree_toggle {
+            width: 12px;
+            text-align: center;
+            color: #777;
+            font-size: 10px;
+        }
+
+        .tree_checkbox {
+            margin: 0;
+        }
+
+        .tree_label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tree_right {
+            margin-left: auto;
+            display: flex;
+            gap: 6px;
+            opacity: 0.7;
+        }
+
+        .tree_icon {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+
+        /* 树图标固定在最左侧 */
+        .tree_icon_left_container {
+            position: absolute;
+            left: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 2px;
+        }
+
+        .tree_icon:hover {
+            background: #ddd;
+        }
+
+
+        /* =========================
+        TREE CONTEXT MENU
+        ========================= */
+
+        .tree_menu {
+            position: fixed;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            font-size: 13px;
+            z-index: 2000;
+            padding: 4px 0;
+        }
+
+        .tree_menu_item {
+            padding: 4px 16px;
             white-space: nowrap;
         }
+
+        .tree_menu_item:hover {
+            background: #eee;
+        }
+
+
+        /* =========================
+        GLYPH SEQUENCE PLACEHOLDER
+        ========================= */
+
+        .sequence_panel {
+            padding: 6px;
+        }
+
+        .sequence_panel input {
+            width: 100%;
+            height: 20px;
+            font-size: 13px;
+            padding: 2px 6px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .sequence_panel input:focus {
+            outline: none;
+            border-color: #888;
+        }
+
+        .tree_item.collapsed > .tree_left .tree_toggle {
+            transform: rotate(-90deg);
+        }
+
+        .tree_item.hidden_by_parent {
+            display: none;
+        }
+
     </style>
     
 </head>
@@ -236,19 +430,60 @@
 
     <div class="bottom" id="bottom">
         <div class="bottom_tools">
-            <div class="tool_button">
-                <img src="./assets/Bootstrap_Icons/cursor.svg" alt="Select" style="width: 14px; height: 14px;">
+            <div class="tool_button" data-tip="Select and transform objects">
+                <img src="./assets/Inkscape-Icons-2019/draw_select.svg" alt="Select" style="width: 14px; height: 14px;">
             </div>
-            <div class="tool_button">
-                <img src="./assets/Bootstrap_Icons/bezier.svg" alt="Node" style="width: 14px; height: 14px;">
+            <div class="tool_button" data-tip="Edit paths by nodes">
+                <img src="./assets/Inkscape-Icons-2019/draw_node.svg" alt="Node" style="width: 14px; height: 14px;">
             </div>
-            <div class="tool_button">
-                <img src="./assets/Bootstrap_Icons/vector-pen.svg" alt="Pen" style="width: 14px; height: 14px;">
+            <div class="tool_button" data-tip="Draw Bezier curves">
+                <img src="./assets/Inkscape-Icons-2019/draw_calligraphic.svg" alt="Pen" style="width: 14px; height: 14px;">
             </div>
-            <div class="tool_button">
-                <img src="./assets/Bootstrap_Icons/circle.svg" alt="Ellipse" style="width: 14px; height: 14px;">
+            <div class="tool_button" data-tip="Create Ellipses">
+                <img src="./assets/Inkscape-Icons-2019/g8245.svg" alt="Ellipse" style="width: 14px; height: 14px;">
             </div>
+            <div class="tool_button" data-tip="Measure objects">
+                <img src="./assets/Inkscape-Icons-2019/tool_measure.svg" alt="Ruler" style="width: 14px; height: 14px;">
+            </div>
+
             <div class="tool_separator"></div>
+
+            <div class="tool_button" data-tip="Insert new nodes into selected segments">
+                <img src="./assets/Inkscape-Icons-2019/node_insert.svg" alt="Pen" style="width: 14px; height: 14px;">
+            </div>
+            <div class="tool_button" data-tip="Delete selected nodes">
+                <img src="./assets/Inkscape-Icons-2019/node_delete.svg" alt="Ellipse" style="width: 14px; height: 14px;">
+            </div>
+
+            <div class="tool_separator"></div>
+
+            <div class="tool_button" data-tip="Join selected nodes">
+                <img src="./assets/Inkscape-Icons-2019/node_join.svg" alt="Pen" style="width: 14px; height: 14px;">
+            </div>
+            <div class="tool_button" data-tip="Break path at selected nodes">
+                <img src="./assets/Inkscape-Icons-2019/node_break.svg" alt="Ellipse" style="width: 14px; height: 14px;">
+            </div>
+            <div class="tool_button" data-tip="Join selected endnodes with a new segment">
+                <img src="./assets/Inkscape-Icons-2019/node_join_segment.svg" alt="Pen" style="width: 14px; height: 14px;">
+            </div>
+            <div class="tool_button" data-tip="Delete segment between two non-endpoint nodes">
+                <img src="./assets/Inkscape-Icons-2019/node_delete_segment.svg" alt="Ellipse" style="width: 14px; height: 14px;">
+            </div>
+
+            <div class="tool_separator"></div>
+
+            <div class="tool_button" data-tip="Make selected nodes corner">
+                <img src="./assets/Inkscape-Icons-2019/node_cusp.svg" alt="Pen" style="width: 14px; height: 14px;">
+            </div>
+            <div class="tool_button" data-tip="Make selected nodes smooth">
+                <img src="./assets/Inkscape-Icons-2019/node_smooth.svg" alt="Ellipse" style="width: 14px; height: 14px;">
+            </div>
+            <div class="tool_button" data-tip="Make selected nodes symmetric">
+                <img src="./assets/Inkscape-Icons-2019/node_symmetric.svg" alt="Ruler" style="width: 14px; height: 14px;">
+            </div>
+
+            
+
             <output id="mouse_pos" style="margin-left: auto;">Mouse Pos 0.00 0.00</output>
             
         </div>
@@ -257,9 +492,138 @@
     <div class="middle">
         
         <div class="right">
-            <div class="placeholder">
+
+            
+
+            <div class="placeholder tree_panel" id="object_tree">
+
+                <div class="title_panel">
+                    <div class="panel_title">Objects</div>
+                </div>
+
+                <!-- ROOT -->
+                <!-- level 0 -->
+                <div class="tree_item" data-depth="0">
+                    <div class="tree_icon_left_container">
+                        <div class="tree_icon">👁</div>
+                        <div class="tree_icon">🔒</div>
+                    </div>
+                    <div class="tree_left">
+                        <div class="tree_indent"></div>
+                        <div class="tree_toggle">▾</div>
+                        <input type="checkbox" class="tree_checkbox">
+                        <div class="tree_label">Glyph A</div>
+                    </div>
+                </div>
+
+                <!-- level 1 -->
+                <div class="tree_item" data-depth="1">
+                    <div class="tree_icon_left_container">
+                        <div class="tree_icon">👁</div>
+                        <div class="tree_icon">🔒</div>
+                    </div>
+                    <div class="tree_left">
+                        <div class="tree_indent"></div>
+                        <div class="tree_toggle">▾</div>
+                        <input type="checkbox" class="tree_checkbox">
+                        <div class="tree_label">Group 1</div>
+                    </div>
+                </div>
+
+                <!-- level 2 -->
+                <div class="tree_item" data-depth="2">
+                    <div class="tree_icon_left_container">
+                        <div class="tree_icon">👁</div>
+                        <div class="tree_icon">🔒</div>
+                    </div>
+                    <div class="tree_left">
+                        <div class="tree_indent"></div>
+                        <div class="tree_toggle"></div>
+                        <input type="checkbox" class="tree_checkbox">
+                        <div class="tree_label">Path 1</div>
+                    </div>
+                </div>
+
+                <div class="tree_item" data-depth="2">
+                    <div class="tree_icon_left_container">
+                        <div class="tree_icon">👁</div>
+                        <div class="tree_icon">🔒</div>
+                    </div>
+                    <div class="tree_left">
+                        <div class="tree_indent"></div>
+                        <div class="tree_toggle"></div>
+                        <input type="checkbox" class="tree_checkbox">
+                        <div class="tree_label">Path 2</div>
+                    </div>
+                </div>
+
+                <!-- level 1 -->
+                <div class="tree_item" data-depth="1">
+                    <div class="tree_icon_left_container">
+                        <div class="tree_icon">👁</div>
+                        <div class="tree_icon">🔒</div>
+                    </div>
+                    <div class="tree_left">
+                        <div class="tree_indent"></div>
+                        <div class="tree_toggle">▾</div>
+                        <input type="checkbox" class="tree_checkbox">
+                        <div class="tree_label">Component B</div>
+                    </div>
+                </div>
+
+                <!-- level 2 -->
+                <div class="tree_item" data-depth="2">
+                    <div class="tree_icon_left_container">
+                        <div class="tree_icon">👁</div>
+                        <div class="tree_icon">🔒</div>
+                    </div>
+                    <div class="tree_left">
+                        <div class="tree_indent"></div>
+                        <div class="tree_toggle">▾</div>
+                        <input type="checkbox" class="tree_checkbox">
+                        <div class="tree_label">Nested Group</div>
+                    </div>
+                </div>
+
+                <!-- level 3 -->
+                <div class="tree_item" data-depth="3">
+                    <div class="tree_icon_left_container">
+                        <div class="tree_icon">👁</div>
+                        <div class="tree_icon">🔒</div>
+                    </div>
+                    <div class="tree_left">
+                        <div class="tree_indent"></div>
+                        <div class="tree_toggle"></div>
+                        <input type="checkbox" class="tree_checkbox">
+                        <div class="tree_label">Deep Path</div>
+                    </div>
+                </div>
             </div>
+
+
+
+
+
+
+            
+
+
+            <div class="placeholder glyphs_panel">
+
+                <div class="title_panel">
+                    <div class="panel_title">Glyphs and Components Sequence</div>
+                </div>
+                <div class="sequence_panel">
+                    <input type="text" placeholder="">
+                </div>
+            </div>
+
+            
             <div class="placeholder property_panel">
+
+                <div class="title_panel">
+                    <div class="panel_title">Property Editor</div>
+                </div>
                 <div class="property_group">
                     <div class="property_group_title">Position</div>
 
@@ -308,6 +672,14 @@
                     </div>
                 </div>
 
+                <div class="property_group">
+                    <div class="property_group_title">Test</div>
+                    <div class="property_single_row">
+                        <label>test</label>
+                        <input type="text">
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -318,7 +690,168 @@
     </div>
 
     
+    <script>
+        /* =========================
+        TREE INITIALIZATION
+        ========================= */
 
+        const tree = document.getElementById("object_tree");
+
+        /* ---------- 缩进计算 ---------- */
+        function updateTreeIndent() {
+            document.querySelectorAll(".tree_item").forEach(item => {
+                const depth = Number(item.dataset.depth || 0);
+                const indent = item.querySelector(".tree_indent");
+                if(indent) {
+                    indent.style.marginLeft = (depth * 14) + "px";
+                }
+            });
+        }
+
+        updateTreeIndent();
+        updateVisibility();
+
+        /* =========================
+        SELECTION (包含所有后代)
+        ========================= */
+
+        function setSelection(item, selected) {
+            const items = [...tree.querySelectorAll(".tree_item")];
+            const index = items.indexOf(item);
+            const depth = Number(item.dataset.depth);
+
+            function apply(it, state) {
+                it.classList.toggle("selected", state);
+
+                const cb = it.querySelector(".tree_checkbox");
+                if(cb) cb.checked = state;
+            }
+
+            apply(item, selected);
+
+            for(let i = index + 1; i < items.length; i++) {
+                const d = Number(items[i].dataset.depth);
+                if(d <= depth) break;
+
+                apply(items[i], selected);
+            }
+        }
+
+        tree.addEventListener("click", e => {
+
+            if(e.target.classList.contains("tree_checkbox")) {
+                const item = e.target.closest(".tree_item");
+                setSelection(item, e.target.checked);
+                e.stopPropagation();
+                return;
+            }
+
+            const item = e.target.closest(".tree_item");
+            if(!item) return;
+
+            const selected = !item.classList.contains("selected");
+            setSelection(item, selected);
+        });
+
+
+        /* =========================
+        CONTEXT MENU
+        ========================= */
+
+        tree.addEventListener("contextmenu", e => {
+            e.preventDefault();
+
+            removeMenu();
+
+            const menu = document.createElement("div");
+            menu.className = "tree_menu";
+            menu.style.left = e.clientX + "px";
+            menu.style.top = e.clientY + "px";
+
+            menu.innerHTML = `
+                <div class="tree_menu_item">New Object</div>
+                <div class="tree_menu_item">Duplicate</div>
+                <div class="tree_menu_item">Delete</div>
+                <div class="tree_menu_item">Placeholder Option</div>
+            `;
+
+            document.body.appendChild(menu);
+        });
+
+        document.addEventListener("click", removeMenu);
+
+        function removeMenu() {
+            document.querySelectorAll(".tree_menu").forEach(m => m.remove());
+        }
+
+        /* =========================
+        EXPAND / COLLAPSE
+        ========================= */
+
+        function updateVisibility() {
+            const items = [...tree.querySelectorAll(".tree_item")];
+
+            // 先全部显示
+            items.forEach(i => i.classList.remove("hidden_by_parent"));
+
+            for(let i = 0; i < items.length; i++) {
+                if(!items[i].classList.contains("collapsed")) continue;
+
+                const parentDepth = Number(items[i].dataset.depth);
+
+                for(let j = i + 1; j < items.length; j++) {
+                    const d = Number(items[j].dataset.depth);
+                    if(d <= parentDepth) break;
+
+                    items[j].classList.add("hidden_by_parent");
+                }
+            }
+        }
+
+        tree.addEventListener("click", e => {
+
+            const toggle = e.target.closest(".tree_toggle");
+            if(!toggle) return;
+
+            const item = toggle.closest(".tree_item");
+            if(!item) return;
+
+            // 没有子节点的不处理
+            const items = [...tree.querySelectorAll(".tree_item")];
+            const index = items.indexOf(item);
+            const depth = Number(item.dataset.depth);
+
+            let hasChild = false;
+            if(index + 1 < items.length) {
+                hasChild = Number(items[index + 1].dataset.depth) > depth;
+            }
+            if(!hasChild) return;
+
+            item.classList.toggle("collapsed");
+
+            updateVisibility();
+        });
+
+        /* 点击非复选框区域：选中当前节点及所有后代，其余节点取消选中 */
+        tree.addEventListener("click", e => {
+            const item = e.target.closest(".tree_item");
+            if(!item) return;
+
+            if(!e.target.classList.contains("tree_checkbox")) {
+                const items = [...tree.querySelectorAll(".tree_item")];
+
+                // 先取消所有选中
+                items.forEach(it => {
+                    it.classList.remove("selected");
+                    const cb = it.querySelector(".tree_checkbox");
+                    if(cb) cb.checked = false;
+                });
+
+                // 再选中当前节点及其后代
+                setSelection(item, true);
+            }
+        });
+    </script>
 
 </body>
 </html>

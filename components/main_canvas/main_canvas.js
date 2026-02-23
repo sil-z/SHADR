@@ -134,13 +134,13 @@ class MainCanvas extends HTMLElement {
 
             if (e.ctrlKey) {
                 e.preventDefault();
-                if(this.is_mouse_in_element(e, this.main_canvas_large))
+                if(this.is_mouse_in_element(e, this.main_canvas_large) && !this.dragging)
                 {
                     this.change_canvas_size(e.deltaY, x, y, false);
                 }
             } else if (e.altKey) {
                 e.preventDefault();
-                if(this.is_mouse_in_element(e, this.main_canvas_large))
+                if(this.is_mouse_in_element(e, this.main_canvas_large) && !this.dragging)
                 {
                     this.change_canvas_size(e.deltaY, x, y, true);
                 }
@@ -202,13 +202,13 @@ class MainCanvas extends HTMLElement {
             this.last_mouse_pos_x = e.clientX;
             this.last_mouse_pos_y = e.clientY;
 
-            if(this.mouse_pos_output !== null && this.mouse_pos_output !== undefined) {
+            if(this.mouse_pos_output !== null && this.mouse_pos_output !== undefined && !this.dragging) {
                 this.mouse_pos_output.textContent = "Mouse Pos " + String(((x - rect.left) / this.scale).toFixed(2)) + " " + String((1000 - (y - rect.top) / this.scale).toFixed(2));
             } else {
                 this.mouse_pos_output = document.querySelector("#mouse_pos");
             }
 
-            if((e.buttons & 4) !== 0 && this.dragging === true && this.is_mouse_in_element(e, this.main_canvas_large)) {
+            if((e.buttons & 4) !== 0 && this.dragging === true/* && this.is_mouse_in_element(e, this.main_canvas_large)*/) {
 
                 // 按下中键时移动，更新画布拖动数据
                 const dx = e.clientX - this.drag_start.x;

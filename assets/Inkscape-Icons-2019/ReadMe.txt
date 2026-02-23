@@ -1,0 +1,1 @@
+I'm releasing the new icon designs into the public domain. No attribution necessary. Feel free to use them however you'd like! - Nick Saporito
